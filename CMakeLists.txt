@@ -1,21 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 project(SystemMonitorGUI LANGUAGES C CXX)
 
-# -----------------------------
-# C++ Standard
-# -----------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# -----------------------------
-# GLFW
-# -----------------------------
 # Build GLFW from submodule
 add_subdirectory(external/glfw)
 
-# -----------------------------
 # ImGui + ImPlot sources
-# -----------------------------
 set(IMGUI_SOURCES
     external/imgui/imgui.cpp
     external/imgui/imgui_draw.cpp
@@ -31,9 +23,7 @@ set(IMGUI_SOURCES
     external/implot/implot_demo.cpp
 )
 
-# -----------------------------
 # Project sources
-# -----------------------------
 set(PROJECT_SOURCES
     src/main.cpp
 
@@ -44,17 +34,20 @@ set(PROJECT_SOURCES
     src/ui/dashboard.cpp
 )
 
-# -----------------------------
 # Executable
-# -----------------------------
 add_executable(SystemMonitor
     ${PROJECT_SOURCES}
     ${IMGUI_SOURCES}
 )
 
-# -----------------------------
+add_custom_target(run
+    COMMAND SystemMonitor
+    DEPENDS SystemMonitor
+    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+)
+
+
 # Include directories
-# -----------------------------
 target_include_directories(SystemMonitor PRIVATE
     src
     external/imgui
@@ -63,9 +56,7 @@ target_include_directories(SystemMonitor PRIVATE
     external/glfw/include
 )
 
-# -----------------------------
 # macOS frameworks
-# -----------------------------
 if(APPLE)
     target_link_libraries(SystemMonitor
         glfw
@@ -81,9 +72,6 @@ else()
     )
 endif()
 
-# -----------------------------
-# Warnings (optional but nice)
-# -----------------------------
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(SystemMonitor PRIVATE -Wall -Wextra -Wpedantic)
 endif()
