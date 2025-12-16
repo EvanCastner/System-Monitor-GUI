@@ -9,9 +9,9 @@
 
 namespace ui {
 	void render_dashboard() {
-		static moniter::CpuData cpu;
+		static monitor::CpuData cpu;
 
-		moniter::update_cpu(cpu);
+		monitor::update_cpu(cpu);
 		
 		ImGui::Begin("System Moniter Dashboard");
 
