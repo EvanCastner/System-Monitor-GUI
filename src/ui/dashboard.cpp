@@ -28,7 +28,17 @@ namespace ui {
 			ImPlot::EndPlot();
 		}
 
-		ImGui::Text("Memory Usage: TODO");
+		ImGui::Text("Memory Usage Dummy Data");
+		ImGui::Separator();
+
+		ImGui::Text("RAM %.0f MB / %.0f MB ",
+			mem.usedMB;
+			mem.totalMB;
+			mem.usagePercent;
+		);
+		// Progress Bar for the Memory data
+		ImGui::ProgressBar(mem.usagePercent / 100.0f, InVec2(-1, 0));
+
 		ImGui::Text("Network Usage: TODO");
 
 		ImGui::End();
