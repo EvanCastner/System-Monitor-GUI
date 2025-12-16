@@ -9,21 +9,13 @@
 
 namespace ui {
 	void render_dashboard() {
-		static float t = 0.0f;
-		static std::vector<float> cpu_history;
-		static const int MAX_SAMPLES = 200;
+		static moniter::CpuData cpu;
 
-		// Generate dummy CPU usage
-		float cpu_usage = 50.0f + 40.0f * std::sin(t);
-		t = 0.05f;
-
-		cpu_history.push_back(cpu_usage);
-		if (cpu_history.size() > MAX_SAMPLES) {
-			cpu_history.erase(cpu_history.begin());
-		}
-
+		moniter::update_cpu(cpu);
+		
 		ImGui::Begin("System Moniter Dashboard");
 
+		// CPU Usage
 		ImGui::Text("CPU Usage Dummy Data");
 		ImGui::Separator();
 
