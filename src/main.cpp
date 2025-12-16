@@ -8,6 +8,8 @@
 #include "imgui_impl_opengl3.h"
 #include "implot.h"
 
+#include "ui/dashboard.hpp"
+
 int main() {
 
 	if (!glfwInit()) {
@@ -46,10 +48,8 @@ int main() {
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
-
-			ImGui::Begin("System Moniter");
-			ImGui::Text("Cmake + ImGui build successful!");
-			ImGui::End();
+			
+			ui::render_dashboard();
 
 			ImGui::Render();
 			int display_w, display_h;
