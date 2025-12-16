@@ -1,5 +1,11 @@
 #pragma once 
 
-namespace monitor {
-	float get_memory_usage();
+namespace moniter {
+	struct MemoryData {
+		float usagePercent;
+		long long totalMB;
+		long long usedMB;
+	};
+
+	void update_memory(MemoryData& mem);
 }
