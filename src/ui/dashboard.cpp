@@ -1,6 +1,6 @@
 #include "dashboard.hpp"
-#include "cpu.hpp"
-#include "memory.hpp"
+#include "monitor/cpu.hpp"
+#include "monitor/memory.hpp"
 
 #include "imgui.h"
 #include "implot.h"
@@ -17,7 +17,7 @@ namespace ui {
 		monitor::update_cpu(cpu);
 		monitor::update_memory(mem);
 		
-		ImGui::Begin("System Moniter Dashboard");
+		ImGui::Begin("System Monitor Dashboard");
 
 		// CPU Usage
 		ImGui::Text("CPU Usage Dummy Data");
@@ -35,7 +35,7 @@ namespace ui {
 		ImGui::Text("Memory Usage Dummy Data");
 		ImGui::Separator();
 
-		ImGui::Text("RAM %.0f MB / %.0f MB ",
+		ImGui::Text("RAM %lld MB / %lld MB (%.0f%%)",
 			mem.usedMB,
 			mem.totalMB,
 			mem.usagePercent
