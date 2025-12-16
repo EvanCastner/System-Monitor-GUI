@@ -1,4 +1,6 @@
 #include "dashboard.hpp"
+#include "monitor/cpu.hpp"
+#include "monitor/memory.hpp"
 
 #include "imgui.h"
 #include "implot.h"
@@ -9,21 +11,15 @@
 
 namespace ui {
 	void render_dashboard() {
-		static float t = 0.0f;
-		static std::vector<float> cpu_history;
-		static const int MAX_SAMPLES = 200;
+		static monitor::CpuData cpu;
+		static monitor::MemoryData mem;
 
-		// Generate dummy CPU usage
-		float cpu_usage = 50.0f + 40.0f * std::sin(t);
-		t = 0.05f;
+		monitor::update_cpu(cpu);
+		monitor::update_memory(mem);
+		
+		ImGui::Begin("System Monitor Dashboard");
 
-		cpu_history.push_back(cpu_usage);
-		if (cpu_history.size() > MAX_SAMPLES) {
-			cpu_history.erase(cpu_history.begin());
-		}
-
-		ImGui::Begin("System Moniter Dashboard");
-
+		// CPU Usage
 		ImGui::Text("CPU Usage Dummy Data");
 		ImGui::Separator();
 
@@ -31,12 +27,22 @@ namespace ui {
 			ImPlot::SetupAxes(nullptr, "Usage %", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
 			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 100, ImGuiCond_Always);
 
-			ImPlot::PlotLine("CPU %", cpu_history.data(), cpu_history.size());
+			ImPlot::PlotLine("CPU %", cpu.history.data(), cpu.history.size());
 
 			ImPlot::EndPlot();
 		}
 
-		ImGui::Text("Memory Usage: TODO");
+		ImGui::Text("Memory Usage Dummy Data");
+		ImGui::Separator();
+
+		ImGui::Text("RAM %lld MB / %lld MB (%.0f%%)",
+			mem.usedMB,
+			mem.totalMB,
+			mem.usagePercent
+		);
+		// Progress Bar for the Memory data
+		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 0));
+
 		ImGui::Text("Network Usage: TODO");
 
 		ImGui::End();
