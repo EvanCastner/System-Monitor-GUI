@@ -14,7 +14,7 @@ namespace ui {
 		static const int MAX_SAMPLES = 200;
 
 		// Generate dummy CPU usage
-		flaot cpu_usage = 50.0f + 40.0f * std::sin(t);
+		float cpu_usage = 50.0f + 40.0f * std::sin(t);
 		t = 0.05f;
 
 		cpu_history.push_back(cpu_usage);
@@ -25,11 +25,11 @@ namespace ui {
 		ImGui::Begin("System Moniter Dashboard");
 
 		ImGui::Text("CPU Usage Dummy Data");
-		ImGui::Seperator();
+		ImGui::Separator();
 
 		if (ImPlot::BeginPlot("CPU Usage %", ImVec2(-1, 200))) {
 			ImPlot::SetupAxes(nullptr, "Usage %", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
-			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 100. ImGuiCond_Always);
+			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 100, ImGuiCond_Always);
 
 			ImPlot::PlotLine("CPU %", cpu_history.data(), cpu_history.size());
 
