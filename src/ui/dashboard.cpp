@@ -1,4 +1,6 @@
 #include "dashboard.hpp"
+#include "cpu.hpp"
+#include "memory.hpp"
 
 #include "imgui.h"
 #include "implot.h"
@@ -10,8 +12,10 @@
 namespace ui {
 	void render_dashboard() {
 		static monitor::CpuData cpu;
+		static monitor::MemoryData mem;
 
 		monitor::update_cpu(cpu);
+		monitor::update_memory(mem);
 		
 		ImGui::Begin("System Moniter Dashboard");
 
@@ -23,7 +27,7 @@ namespace ui {
 			ImPlot::SetupAxes(nullptr, "Usage %", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
 			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 100, ImGuiCond_Always);
 
-			ImPlot::PlotLine("CPU %", cpu_history.data(), cpu_history.size());
+			ImPlot::PlotLine("CPU %", cpu.history.data(), cpu.history.size());
 
 			ImPlot::EndPlot();
 		}
@@ -32,12 +36,12 @@ namespace ui {
 		ImGui::Separator();
 
 		ImGui::Text("RAM %.0f MB / %.0f MB ",
-			mem.usedMB;
-			mem.totalMB;
-			mem.usagePercent;
+			mem.usedMB,
+			mem.totalMB,
+			mem.usagePercent
 		);
 		// Progress Bar for the Memory data
-		ImGui::ProgressBar(mem.usagePercent / 100.0f, InVec2(-1, 0));
+		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 0));
 
 		ImGui::Text("Network Usage: TODO");
 

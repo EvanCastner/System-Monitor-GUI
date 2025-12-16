@@ -1,4 +1,5 @@
 #pragma once 
+#include <vector>
 
 namespace monitor {
 	struct CpuData {

@@ -1,7 +1,7 @@
 #pragma once 
 #include <vector>
 
-namespace moniter {
+namespace monitor {
 	struct MemoryData {
 		float usagePercent;
 		long long totalMB;
