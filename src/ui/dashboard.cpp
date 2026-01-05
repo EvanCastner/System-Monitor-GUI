@@ -35,6 +35,7 @@ namespace ui {
 			ImPlot::EndPlot();
 		}
 
+		// MEMORY usage
 		ImGui::Text("Memory Usage Dummy Data");
 		ImGui::Separator();
 
@@ -46,18 +47,28 @@ namespace ui {
 		// Progress Bar for the Memory data
 		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 0));
 
-		// Network Usage
+		// NETWORK Usage
 		ImGui::Text("Network Usage Dummy Data");
 		ImGui::Separator();
 
-		ImGui::Text("Download: %.1f KB/s", net.downloaidnKBps);
+		// Plot graph
+		if (ImPlot::BeginPlot("Network Speed (KB/s)", ImVec2(-1, 200))) {
+			ImPlot::SetupAxes(nullptr, "KB/s", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
+
+			ImPlot::PlotLine("Download", net.downloadHistory.data(), net.downloadHistory.size());
+			ImPlot::PlotLine("Upload",   net.uploadHistory.data(),   net.uploadHistory.size());
+
+			ImPlot::EndPlot();
+		}
+
+		ImGui::Text("Download: %.1f KB/s", net.downloadKBps);
 		ImGui::Text("Upload:   %.1f KB/s", net.uploadKBps);
 
 		ImGui::Spacing();
 
 		ImGui::Text("Total Downloaded: %.1f MB", net.totalDownloadMB);
 		ImGui::Text("Total Uploaded:   %.1f MB", net.totalUploadMB);
-		
+
 		// End the GUI
 		ImGui::End();
 	}
