@@ -1,5 +1,13 @@
 #pragma once 
 
 namespace monitor {
-	float get_network_usage();
+	struct NetworkData {
+		float downloaidnKBps;
+		float uploadKBps;
+		float totalDownloadMB;
+		float totalUploadMB;
+	};
+
+	void update_network(NetworkData& net);
+
 }
