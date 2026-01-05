@@ -4,6 +4,10 @@ project(SystemMonitorGUI LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ---- GLFW platform config ----
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)
+
 # Build GLFW from submodule
 add_subdirectory(external/glfw)
 
