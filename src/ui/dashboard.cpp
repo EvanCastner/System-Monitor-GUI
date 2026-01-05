@@ -1,6 +1,7 @@
 #include "dashboard.hpp"
 #include "monitor/cpu.hpp"
 #include "monitor/memory.hpp"
+#include "monitor/network.hpp"
 
 #include "imgui.h"
 #include "implot.h"
@@ -13,9 +14,11 @@ namespace ui {
 	void render_dashboard() {
 		static monitor::CpuData cpu;
 		static monitor::MemoryData mem;
+		static monitor::NetworkData net;
 
 		monitor::update_cpu(cpu);
 		monitor::update_memory(mem);
+		monitor::update_network(net);
 		
 		ImGui::Begin("System Monitor Dashboard");
 
@@ -43,8 +46,19 @@ namespace ui {
 		// Progress Bar for the Memory data
 		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 0));
 
-		ImGui::Text("Network Usage: TODO");
+		// Network Usage
+		ImGui::Text("Network Usage Dummy Data");
+		ImGui::Separator();
 
+		ImGui::Text("Download: %.1f KB/s", net.downloaidnKBps);
+		ImGui::Text("Upload:   %.1f KB/s", net.uploadKBps);
+
+		ImGui::Spacing();
+
+		ImGui::Text("Total Downloaded: %.1f MB", net.totalDownloadMB);
+		ImGui::Text("Total Uploaded:   %.1f MB", net.totalUploadMB);
+		
+		// End the GUI
 		ImGui::End();
 	}
 }
