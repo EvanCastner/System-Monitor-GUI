@@ -23,11 +23,11 @@ namespace ui {
 		ImGui::Begin("System Monitor Dashboard");
 
 		// CPU Usage
-		ImGui::Text("CPU Usage Dummy Data");
+		ImGui::Text("CPU Usage Data");
 		ImGui::Separator();
 
 		if (ImPlot::BeginPlot("CPU Usage %", ImVec2(-1, 200))) {
-			ImPlot::SetupAxes(nullptr, "Usage %", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
+			ImPlot::SetupAxes(nullptr, "Usage %", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_None);
 			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 100, ImGuiCond_Always);
 
 			ImPlot::PlotLine("CPU %", cpu.history.data(), cpu.history.size());

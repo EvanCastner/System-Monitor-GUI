@@ -63,27 +63,33 @@ namespace monitor {
 		 	uint64_t idle = info.cpu_ticks[CPU_STATE_IDLE];
 		 	uint64_t nice = info.cpu_ticks[CPU_STATE_NICE];
 
-		 	if (!initialized) {
-		 		prevUser = user;
-		 		prevSystem = system;
-		 		prevIdle = idle;
-		 		prevNice = nice;
-		 		initialized = true;
-		 		return;
-		 	}
+			if (!initialized) {
+			    prevUser = user;
+			    prevSystem = system;
+			    prevIdle = idle;
+			    prevNice = nice;
+			    initialized = true;
+			    cpu.usage = 0.0f;
+			} else {
+			    uint64_t userDiff   = user   - prevUser;
+			    uint64_t systemDiff = system - prevSystem;
+			    uint64_t idleDiff   = idle   - prevIdle;
+			    uint64_t niceDiff   = nice   - prevNice;
 
-		 	uint64_t total = (user - prevUser) + (system - prevSystem) + (idle - prevIdle) + (nice - prevNice);
+			    uint64_t total = userDiff + systemDiff + idleDiff + niceDiff;
 
-		 	if (total > 0) {
-		 		cpu.usage = 100.0f * 
-		 		(float)(user - prevUser) + (system - prevSystem) + (nice - prevNice) / (float)total;
-		 	}
+			    if (total > 0) {
+			        cpu.usage = 100.0f *
+			            (float)(userDiff + systemDiff + niceDiff) /
+			            (float)total;
+			    }
+			}
 
-		 	prevUser = user;
-		 	prevSystem = system;
-		 	prevIdle = idle;
-		 	prevNice = nice;
-
+			prevUser = user;
+			prevSystem = system;
+			prevIdle = idle;
+			prevNice = nice;
+			
 		 #endif
 
 		 cpu.history.push_back(cpu.usage);
