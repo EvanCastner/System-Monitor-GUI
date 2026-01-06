@@ -5,7 +5,7 @@
  
 	#include <windows.h>
 
-#elif defined(_APPLE__)
+#elif defined(__APPLE__)
 
 	#include <mach/mach.h>
 	#include <mach/host_info.h>
@@ -48,7 +48,7 @@ namespace monitor {
 		 	prevKernal = kernal;
 		 	prevUser = user;
 
-		 #elif defined(_APPLE__)
+		 #elif defined(__APPLE__)
 
 		 	static uint64_t prevUser = 0, prevSystem = 0, prevIdle = 0, prevNice = 0;
 		 	static bool initialized = false;
