@@ -1,11 +1,11 @@
 #pragma once 
-#include <vector>
+#include <cstdint>
 
 namespace monitor {
 	struct MemoryData {
 		float usagePercent;
-		long long totalMB;
-		long long usedMB;
+		uint64_t totalMB;
+		uint64_t usedMB;
 	};
 
 	void update_memory(MemoryData& mem);
