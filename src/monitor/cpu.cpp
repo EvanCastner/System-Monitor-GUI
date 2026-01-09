@@ -50,13 +50,25 @@ namespace monitor {
 
 		 #elif defined(__APPLE__)
 
-		 	static uint64_t prevUser = 0, prevSystem = 0, prevIdle = 0, prevNice = 0;
+		 	static uint64_t prevUser = 0;
+		 	static uint64_t prevSystem = 0; 
+		 	static uint64_t prevIdle = 0;
+		 	static uint64_t prevNice = 0;
 		 	static bool initialized = false;
 
 		 	host_cpu_load_info_data_t info;
 		 	mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
 
-		 	host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&info, &count);
+		 	kern_return_t kr = host_statistics(
+		 		mach_host_self(),
+		 		HOST_CPU_LOAD_INFO,
+		 		reinterpret_cast<host_info_t>(&info),
+		 		&count
+		 	);
+
+		 	if (kr != KERN_SUCCESS) {
+		 		return;
+		 	}
 
 		 	uint64_t user = info.cpu_ticks[CPU_STATE_USER];
 		 	uint64_t system = info.cpu_ticks[CPU_STATE_SYSTEM];
