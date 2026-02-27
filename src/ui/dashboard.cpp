@@ -60,7 +60,7 @@ namespace ui {
 		}
 
 		// ==== MEMORY USAGE SECTION ====
-		ImGui::Text("Memory Usage Dummy Data");  // TODO: Edit title
+		ImGui::Text("Memory Usage Data");
 		ImGui::Separator();
 		
 		// Display memory usage in text form: used / total
