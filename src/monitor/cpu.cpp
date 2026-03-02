@@ -11,7 +11,7 @@
 	// Host CPU Statistics
 	#include <mach/host_info.h>
 
-#elif defined(_linux_)
+#elif defined(__linux__)
 	// File stream operations
 	#include <fstream>
 	// String stream operations
@@ -128,11 +128,13 @@ namespace monitor {
 			prevSystem = system;
 			prevIdle = idle;
 			prevNice = nice;
+
+		#elif (__linux__)
+			// Dummy data for linux detected cpu
+			cpu.usage = 45.0f;
 			
 		 #endif
 
-		 // Linux implementation is pending
-		
 		// Add current usage to history buffer
 		cpu.history.push_back(cpu.usage);
 
