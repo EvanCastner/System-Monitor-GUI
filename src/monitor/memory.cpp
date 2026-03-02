@@ -81,8 +81,11 @@ namespace monitor {
 			// Calculate useage percentage
 			mem.usagePercent = (float)mem.usedMB * 100.0f / (float)mem.totalMB;
 
+		#elif defined (__linux__)
+			// Dummy data for linux detected memory
+			mem.totalMB = 55.0;
+			mem.usedMB = 25.0;
+			mem.usagePercent = (float)mem.usedMB * 100.0f / (float)mem.totalMB;
 		#endif
-
-		// Linux implementation is pending
 	}
 }
