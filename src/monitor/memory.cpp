@@ -25,18 +25,20 @@ namespace monitor {
 	void update_memory(MemoryData& mem) {
 
 		#if defined (_WIN32)
+			// Header file only found in windows code
+			#include <windows.h>
 			// Windows implementation using GlobalMemoryStatusEx API
 
-			// Structure to recieve memory status information
-			MEMORYSTATUSX statex;
+			// Structure to receive memory status information
+			MEMORYSTATUSEX statex;
 			// Required: set structure size
 			statex.dwLength = sizeof(statex);
 			// Query system memory information
 			GlobalMemoryStatusEx(&statex);  
 
-			// Concery total physical memory from bytes to megabytes
+			// Convert total physical memory from bytes to megabytes
 			mem.totalMB = statex.ullTotalPhys / (1024 * 1024);
-			// Caculate used memory
+			// Calculate used memory
 			mem.usedMB = (statex.ullTotalPhys - statex.ullAvailPhys) / (1024 * 1024);
 			// Calculate usage percentage
 			mem.usagePercent = (float)mem.usedMB * 100.0f / (float)mem.totalMB;
