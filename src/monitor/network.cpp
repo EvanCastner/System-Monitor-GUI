@@ -124,8 +124,10 @@ namespace monitor {
 		net.downloadHistory.push_back(net.downloadKBps);
 		net.uploadHistory.push_back(net.uploadKBps);
 
-		
-
-
+		// Maintain rolling window by removing oldest sample if buffer is full
+		if (net.downloadHistory.size() > MAX_SAMPLE) {
+			net.downloadHistory.erase(net.downloadHistory.begin());
+			net.uploadHistory.erase(net.uploadHistory.begin());
+		}
 	}
 }
