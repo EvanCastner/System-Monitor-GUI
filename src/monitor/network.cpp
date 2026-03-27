@@ -1,6 +1,25 @@
 #include "network.hpp"
 #include <cmath>
 
+// Platform-specific libraries for CPU monitoring
+#if defined(_WIN32)
+	// Windows API for system time functions
+	#include <windows.h>
+
+#elif defined(__APPLE__)
+    // Mach kernal and interface
+	#include <mach/mach.h>
+	// Host CPU Statistics
+	#include <mach/host_info.h>
+
+#elif defined(__linux__)
+	// File stream operations
+	#include <fstream>
+	// String stream operations
+	#include <sstream>
+
+#endif
+
 namespace monitor {
 
 	static float t =0.0f;
