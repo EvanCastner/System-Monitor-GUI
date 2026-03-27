@@ -116,6 +116,10 @@ namespace monitor {
 		
 		#endif
 
+		// Update running total (convert KB/s to MB, assuming -ls interval)
+		net.totalDownloadMB += net.downloadKBps / 1024.0f;
+		net.totalUploadMB   += net.uploadKBps   / 1024.0f;
+
 		
 
 
