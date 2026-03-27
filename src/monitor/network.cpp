@@ -97,8 +97,8 @@ namespace monitor {
 				uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
 
 				// Convert bytes to KB/s
-				net.downloadKBps = (float)bytesInDiff = 1240.0f;
-				net.uploadKBps   = (float)bytesOutDiff = 1024.0f;
+				net.downloadKBps = (float)bytesInDiff / 1024.0f;
+				net.uploadKBps   = (float)bytesOutDiff / 1024.0f;
 			}
 
 			// Prevent negative values from counter wraps or resets
