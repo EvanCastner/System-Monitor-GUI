@@ -84,5 +84,16 @@ namespace monitor {
 				totalBytesOut += ifmd.ifmd_data.ifi_obytes;
 			}
 
+			// Initialize baseline values on first run
+			if (!initialized) {
+				prevBytesIn = totalBytesIn;
+				prevBytesOut = totalBytesOut;
+				initialized = true;
+				net.downloadKBps = 0.0f;
+				net.uploadKBps = 0.0f;
+			}
+
+			
+
 	}
 }
