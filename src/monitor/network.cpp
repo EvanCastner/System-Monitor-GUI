@@ -14,6 +14,8 @@
 	#include <net/if.h>
 	// Network interface statistics (if_msghdr, if_data)
 	#include <net/if_mib.h>
+	// Interface type constants (IFT_LOOP, IFT_ETHER, etc)
+	#include <net/if_types.h>
 
 #elif defined(__linux__)
 	// File stream operations
@@ -41,7 +43,7 @@ namespace monitor {
 			net.uploadKbps   = 0.0f;
 		
 		#elif defined(__APPLE__)
-			// MacOS implementation using systct1 MIB interface
+			// MacOS implementation using systctl MIB interface
 
 			// Static variables to track previous byte counts and time
 			static uint64_t prevBytesIn  = 0;
@@ -54,7 +56,33 @@ namespace monitor {
 
 			// Query the number of network interfaces via systct1
 			int mib[] = { CTL_NET, PF_LINK, NETLINK_GENERIC, IFMIB_SYSTEM, IFMIB_IFCOUNT };
-			
+			int ifCount = 0;
+			size_t ifCountSize = sizeof(ifCount);
+
+			if (sysctl(mib, 5, &ifCount, &ifCountSize, nullptr, 0) == -1){
+				return;
+			}
+
+			// Iterate over each interace and accumulate byte counts
+			for (int i = 1; i <= ifCount; ++i) {
+				struct ifmibdata ifmd = {};
+				size_t ifmdSize = sizeof(ifmd);
+
+				// Build per-interface MIB: NET -> LINK -> GENERIC -> IFDATA -> index
+				int ifMib[] = { CTL_NET, PF_LINK, NETLINK_GENERIC, IFMIB_IFDATA, i, IFDATA_GENERAL };
+				if (sysctl(ifMib, 6, &ifmd, &ifmdSize, nullptr, 0) == -1) {
+					continue;
+				}
+
+				// Skip lookback interface (lo0) - internal traffic only
+				if (ifmd.ifmd_data.ifi_type == IFT_LOOP) {
+					continue;
+				}
+
+				// Accumulate bytes across all non-loopback interfaces
+				totalBytesIn += ifmd.ifmd_data.ifi_ibytes;
+				totalBytesOut += ifmd.ifmd_data.ifi_obytes;
+			}
 
 	}
 }
