@@ -5,12 +5,15 @@
 #if defined(_WIN32)
 	// Windows API for system time functions
 	#include <windows.h>
+	#include <iphlpapi.h>
 
 #elif defined(__APPLE__)
-    // Mach kernal and interface
-	#include <mach/mach.h>
-	// Host CPU Statistics
-	#include <mach/host_info.h>
+	// Sysctl for querying kernel network interface data
+	#include <sys/sysctl.h>
+	// Network interface structures
+	#include <net/if.h>
+	// Network interface statistics (if_msghdr, if_data)
+	#include <net/if_mib.h>
 
 #elif defined(__linux__)
 	// File stream operations
@@ -36,6 +39,22 @@ namespace monitor {
 			// Dummy data for windows
 			net.downloadKBps = 0.0f;
 			net.uploadKbps   = 0.0f;
+		
+		#elif defined(__APPLE__)
+			// MacOS implementation using systct1 MIB interface
+
+			// Static variables to track previous byte counts and time
+			static uint64_t prevBytesIn  = 0;
+			static uint64_t prevBytesOut = 0;
+			static bool     initialized  = false;
+
+			// Accumulators for summing across all interfaces
+			uint64_t totalBytesIn  = 0;
+			uint64_t totalBytesOut = 0;
+
+			// Query the number of network interfaces via systct1
+			int mib[] = { CTL_NET, PF_LINK, NETLINK_GENERIC, IFMIB_SYSTEM, IFMIB_IFCOUNT };
+			
 
 	}
 }
