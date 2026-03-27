@@ -91,9 +91,33 @@ namespace monitor {
 				initialized = true;
 				net.downloadKBps = 0.0f;
 				net.uploadKBps = 0.0f;
+			} else {
+				// Calculate byte deltas since the last measurment
+				uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
+				uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
+
+				// Convert bytes to KB/s
+				net.downloadKBps = (float)bytesInDiff = 1240.0f;
+				net.uploadKBps   = (float)bytesOutDiff = 1024.0f;
 			}
 
-			
+			// Prevent negative values from counter wraps or resets
+			if (net.downloadKBps < 0.0f) net.downloadKBps = 0.0f;
+			if (net.uploadKBps < 0.0f) net.uploadKBps = 0.0f;
+
+			// Store current byte counts for next iteration
+			prevBytesIn  = totalBytesIn;
+			prevBytesOut = totalBytesOut;
+		
+		#elif defined(__linux__)
+			// Dummy data for Linux detected network
+			net.downloadKBps = 0.0f;
+			net.uploadKBps   = 0.0f;
+		
+		#endif
+
+		
+
 
 	}
 }
