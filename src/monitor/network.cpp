@@ -120,6 +120,10 @@ namespace monitor {
 		net.totalDownloadMB += net.downloadKBps / 1024.0f;
 		net.totalUploadMB   += net.uploadKBps   / 1024.0f;
 
+		// Add current speeds to history buffers
+		net.downloadHistory.push_back(net.downloadKBps);
+		net.uploadHistory.push_back(net.uploadKBps);
+
 		
 
 
