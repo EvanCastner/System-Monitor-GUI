@@ -1,4 +1,5 @@
 #include "cpu.hpp"
+#include <chrono>
 
 // Platform-specific libraries for CPU monitoring
 #if defined(_WIN32)
@@ -137,6 +138,16 @@ namespace monitor
 
 #elif defined(__linux__)
 		// Linux implementation using /proc/stat interface
+
+		// Limit the update rate
+		static auto lastUpdate = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count() < 50)
+		{
+			return;
+		}
+
+		lastUpdate = now;
 
 		// Static variables for previous CPU time values
 		static long long prevIdle = 0;
