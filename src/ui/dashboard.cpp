@@ -67,7 +67,7 @@ namespace ui
 		ImGui::Separator();
 
 		// Display memory usage in text form: used / total
-		ImGui::Text("RAM %lld MB / %lld MB (%.0f%%)",
+		ImGui::Text("RAM %lu MB / %lu MB (%.0f%%)",
 					mem.usedMB,
 					mem.totalMB,
 					mem.usagePercent);
@@ -84,6 +84,14 @@ namespace ui
 		{
 			// Configure axis: no X-axis labels, Y-axis auto-fits to data range
 			ImPlot::SetupAxes(nullptr, "KB/s", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
+			// Y-axis always ranges from 0-100%
+			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 100, ImGuiCond_Always);
+			// Get number of historical samples
+			int count = net.downloadHistory.size();
+			if (count > 0)
+			{
+				ImPlot::SetupAxesLimits(ImAxis_X1, 0, count - 1, ImGuiCond_Always);
+			}
 			// Plot download speed history (shown in one color)
 			ImPlot::PlotLine("Download", net.downloadHistory.data(), net.downloadHistory.size());
 			// Plot upload speed history (shown in different color)
