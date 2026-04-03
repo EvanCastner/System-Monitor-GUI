@@ -1,5 +1,6 @@
 #include "network.hpp"
 #include <cmath>
+#include <cstdint>
 
 // Platform-specific libraries for CPU monitoring
 #if defined(_WIN32)
@@ -22,6 +23,7 @@
 #include <fstream>
 // String stream operations
 #include <sstream>
+#include <iostream>
 
 #endif
 
@@ -121,9 +123,92 @@ namespace monitor
 		prevBytesOut = totalBytesOut;
 
 #elif defined(__linux__)
-		// Dummy data for Linux detected network
-		net.downloadKBps = 0.0f;
-		net.uploadKBps = 0.0f;
+		// Linux implementation using /proc/net/dev
+
+		// Open file
+		std::ifstream netFile("/proc/net/dev");
+		if (!netFile.is_open())
+		{
+			net.downloadKBps = 0.0f;
+			net.uploadKBps = 0.0f;
+			std::cerr << "Network data could not be retrieved" << std::endl;
+		}
+		else
+		{
+			std::string line;
+			uint64_t totalBytesIn = 0;
+			uint64_t totalBytesOut = 0;
+
+			// Skip the first two header lines
+			std::getline(netFile, line);
+			std::getline(netFile, line);
+
+			// Read each interface line
+			while (std::getline(netFile, line))
+			{
+				std::istringstream iss(line);
+				std::string iface;
+				uint64_t bytesIn = 0, bytesOut = 0;
+
+				// Format
+				iss >> iface >> bytesIn;
+
+				// Skip remaining fields until reaching transmit bytes
+				for (int i = 0; i < 7; ++i)
+				{
+					iss >> std::ws;
+				}
+
+				// Transmit bytes
+				iss >> bytesOut;
+
+				// Skip loopback interface
+				if (iface.find("lo:") != std::string::npos)
+					continue;
+
+				totalBytesIn += bytesIn;
+				totalBytesOut += bytesOut;
+			}
+
+			// Static variables to track previous byte counts
+			static uint64_t prevBytesIn = 0;
+			static uint64_t prevBytesOut = 0;
+			static bool initialized = false;
+
+			// initialize baseline on first run
+			if (!initialized)
+			{
+				prevBytesIn = totalBytesIn;
+				prevBytesOut = totalBytesOut;
+				initialized = true;
+				net.downloadKBps = 0.0f;
+				net.uploadKBps = 0.0f;
+			}
+			else
+			{
+				// Compute bytes difference since the last measurment
+				uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
+				uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
+
+				// Convert to KB/s
+				net.downloadKBps = static_cast<float>(bytesInDiff) / 1024.0f;
+				net.uploadKBps = static_cast<float>(bytesOutDiff) / 1024.0f;
+
+				// Prevent negative values when counter resets
+				if (net.downloadKBps < 0.0f)
+				{
+					net.downloadKBps = 0.0f;
+				}
+				if (net.uploadKBps < 0.0f)
+				{
+					net.uploadKBps = 0.0f;
+				}
+			}
+
+			// Update previous values for next iteration
+			prevBytesIn = totalBytesIn;
+			prevBytesOut = totalBytesOut;
+		}
 
 #endif
 
