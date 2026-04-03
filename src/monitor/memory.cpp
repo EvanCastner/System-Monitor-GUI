@@ -13,6 +13,8 @@
 // File stream for reading /proc/meminfo
 // String operations for parsing
 #include <fstream>
+#include <sstream>
+#include <iostream>
 #include <string>
 #endif
 
@@ -88,10 +90,61 @@ namespace monitor
 		mem.usagePercent = (float)mem.usedMB * 100.0f / (float)mem.totalMB;
 
 #elif defined(__linux__)
-		// Dummy data for linux detected memory
-		mem.totalMB = 55.0;
-		mem.usedMB = 25.0;
-		mem.usagePercent = (float)mem.usedMB * 100.0f / (float)mem.totalMB;
+		// Linux implementation using /proc/meminfo
+
+		// Parse memory info
+		// Open the file
+		std::ifstream memFile("/proc/meminfo");
+		if (!memFile.is_open())
+		{
+			mem.totalMB = 0;
+			mem.usedMB = 0;
+			mem.usagePercent = 0.0f;
+
+			// Print a warning to console
+			std::cerr << "[Memory Monitor] ERROR: Could not open /proc/meminfo" << std::endl;
+		}
+		else
+		{
+			std::string line;
+			uint64_t memTotalKB = 0;
+			uint64_t memAvailableKB = 0;
+
+			// Read the file line by line
+			while (std::getline(memFile, line))
+			{
+				std::istringstream iss(line);
+				std::string key;
+				uint64_t value;
+				std::string unit;
+
+				iss >> key >> value >> unit;
+
+				if (key == "MemTotal:")
+				{
+					// Total physical memory in system
+					memTotalKB = value;
+				}
+				else if (key == "MemAvailable:")
+				{
+					// Memory available for apps in KB
+					memAvailableKB = value;
+				}
+
+				// Stop reading if both values are found
+				if (memTotalKB && memAvailableKB)
+				{
+					break;
+				}
+			}
+
+			// Convert KB to MB
+			mem.totalMB = memTotalKB / 1024;
+			mem.usedMB = (memTotalKB - memAvailableKB) / 1024;
+
+			// Calculate the usage percentage
+			mem.usagePercent = (float)mem.usedMB * 100.0f / (float)mem.totalMB;
+		}
 #endif
 	}
 }
