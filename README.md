@@ -1,6 +1,8 @@
 # System-Monitor-GUI
 A lightweight system monitoring GUI application written in C++ that provides real-time insights into your machine’s CPU usage, memory usage, and network activity. The project focuses on performance, clean design, and modern C++ practices, with an interactive graphical interface suitable for Linux-based systems.
 
+![System Monitor Screenshot](SystemGUIScreenShot.png)
+
 ## Features
 
 - **CPU Usage Monitoring** – Real-time CPU utilization tracking  
