@@ -1,6 +1,7 @@
 #include "network.hpp"
 #include <cmath>
 #include <cstdint>
+#include <chrono>
 
 // Platform-specific libraries for CPU monitoring
 #if defined(_WIN32)
@@ -148,23 +149,30 @@ namespace monitor
 			{
 				std::istringstream iss(line);
 				std::string iface;
+
 				uint64_t bytesIn = 0, bytesOut = 0;
 
-				// Format
-				iss >> iface >> bytesIn;
+				// Read the interface
+				iss >> iface;
 
-				// Skip remaining fields until reaching transmit bytes
-				for (int i = 0; i < 7; ++i)
-				{
-					iss >> std::ws;
-				}
+				// Remove the colon from interface name
+				if (iface.back() == ':')
+					iface.pop_back();
 
-				// Transmit bytes
-				iss >> bytesOut;
-
-				// Skip loopback interface
-				if (iface.find("lo:") != std::string::npos)
+				// Skip the loopback
+				if (iface == "lo")
 					continue;
+
+				// Read bytes
+				iss >> bytesIn;
+
+				// Skip next 7 fields
+				uint64_t field;
+				for (int i = 0; i < 7; ++i)
+					iss >> field;
+
+				// Read bytes
+				iss >> bytesOut;
 
 				totalBytesIn += bytesIn;
 				totalBytesOut += bytesOut;
@@ -174,12 +182,17 @@ namespace monitor
 			static uint64_t prevBytesIn = 0;
 			static uint64_t prevBytesOut = 0;
 			static bool initialized = false;
+			static auto prevTime = std::chrono::steady_clock::now();
+
+			auto currentTime = std::chrono::steady_clock::now();
+			float deltaSeconds = std::chrono::duration<float>(currentTime - prevTime).count();
 
 			// initialize baseline on first run
 			if (!initialized)
 			{
 				prevBytesIn = totalBytesIn;
 				prevBytesOut = totalBytesOut;
+				prevTime = currentTime;
 				initialized = true;
 				net.downloadKBps = 0.0f;
 				net.uploadKBps = 0.0f;
@@ -190,19 +203,19 @@ namespace monitor
 				uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
 				uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
 
-				// Convert to KB/s
-				net.downloadKBps = static_cast<float>(bytesInDiff) / 1024.0f;
-				net.uploadKBps = static_cast<float>(bytesOutDiff) / 1024.0f;
-
-				// Prevent negative values when counter resets
-				if (net.downloadKBps < 0.0f)
+				// Convert to seconds and updates on delta time
+				if (deltaSeconds > 0.0f)
+				{
+					net.downloadKBps = (bytesInDiff / 1024.0f) / deltaSeconds;
+					net.uploadKBps = (bytesOutDiff / 1024.0f) / deltaSeconds;
+				}
+				else
 				{
 					net.downloadKBps = 0.0f;
-				}
-				if (net.uploadKBps < 0.0f)
-				{
 					net.uploadKBps = 0.0f;
 				}
+
+				prevTime = currentTime;
 			}
 
 			// Update previous values for next iteration
