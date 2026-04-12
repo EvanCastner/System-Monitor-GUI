@@ -134,6 +134,11 @@ namespace monitor
 		static uint64_t prevBytesIn = 0;
 		static uint64_t prevBytesOut = 0;
 		static bool initialized = false;
+		static auto prevTime = std::chrono::steady_clock::now();
+
+		// Calculate elapsed time since last measurement
+		auto currentTime = std::chrono::steady_clock::now();
+		float deltaSeconds = std::chrono::duration<float>(currentTime - prevTime).count();
 
 		// Accumulators for summing across all interfaces
 		uint64_t totalBytesIn = 0;
@@ -178,6 +183,7 @@ namespace monitor
 		{
 			prevBytesIn = totalBytesIn;
 			prevBytesOut = totalBytesOut;
+			prevTime = currentTime;
 			initialized = true;
 			net.downloadKBps = 0.0f;
 			net.uploadKBps = 0.0f;
@@ -188,9 +194,19 @@ namespace monitor
 			uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
 			uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
 
-			// Convert bytes to KB/s
-			net.downloadKBps = (float)bytesInDiff / 1024.0f;
-			net.uploadKBps = (float)bytesOutDiff / 1024.0f;
+			// Convert bytes to KB/s using elapsed time
+			if (deltaSeconds > 0.0f) 
+			{
+				net.downloadKBps = (float)bytesInDiff / 1024.0f;
+				net.uploadKBps = (float)bytesOutDiff / 1024.0f;
+			}
+			else 
+			{
+				net.downloadKBps = 0.0f;
+				net.uploadKBps = 0.0f;
+			}
+
+			prevTime = currentTime;
 		}
 
 		// Prevent negative values from counter wraps or resets
