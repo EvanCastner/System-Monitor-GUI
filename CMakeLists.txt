@@ -108,6 +108,7 @@ elseif(WIN32)
         gdi32
         user32
         shell32
+        iphlpapi
     )
 else()
     target_link_libraries(SystemMonitor
