@@ -125,21 +125,6 @@ namespace monitor
 				prevBytesOut = totalBytesOut;
 				prevTime = currentTime;
 			}
-
-			// Update totals and history
-			net.totalDownloadMB += net.downloadKBps / 1024.0f;
-			net.totalUploadMB += net.uploadKBps / 1024.0f;
-
-			// Add current speeds to history buffers
-			net.downloadHistory.push_back(net.downloadKBps);
-			net.uploadHistory.push_back(net.uploadKBps);
-
-			// Maintain rolling window by removing oldest samle if buffer is full
-			if (net.downloadHistory.size() > MAX_SAMPLE)
-			{
-				net.downloadHistory.erase(net.downloadHistory.begin());
-				net.uploadHistory.erase(net.uploadHistory.begin());
-			}
 		}
 
 #elif defined(__APPLE__)
