@@ -5,9 +5,16 @@
 
 // Platform-specific libraries for CPU monitoring
 #if defined(_WIN32)
-// Windows API for system time functions
+// Must be included before windows.h to prevent winsock.h conflict
+#include <WinSock2.h>
+// Windows API for system time and memory functions
 #include <windows.h>
+// Network interface table API (MIB_IF_TABLE2, GetIfTable2)
+#include <netioapi.h>
+// IP helper functions (GetIfTable2, FreeMibTable)
 #include <iphlpapi.h>
+// Process and memory status API (MEMORYSTATUSEX)
+#include <psapi.h>
 
 #elif defined(__APPLE__)
 // Sysctl for querying kernel network interface data
@@ -43,9 +50,97 @@ namespace monitor
 	{
 
 #if defined(_WIN32)
-		// Dummy data for windows
-		net.downloadKBps = 0.0f;
-		net.uploadKBps = 0.0f;
+		// Windows implementation using GetIfTable2 API
+
+		// Static variables to track previous byte count and time
+		static uint64_t prevBytesIn = 0;
+		static uint64_t prevBytesOut = 0;
+		static bool initialized = false;
+		static auto prevTime = std::chrono::steady_clock::now();
+
+		// Request the full interface table from Windows
+		MIB_IF_TABLE2 *ifTable = nullptr;
+		if (GetIfTable2(&ifTable) == NO_ERROR)
+		{
+			// Accumulators for summing across all interfaces
+			uint64_t totalBytesIn = 0;
+			uint64_t totalBytesOut = 0;
+
+			// Iterate over each interface and accumulate byte counts
+			for (ULONG i = 0; i < ifTable->NumEntries; i++)
+			{
+				MIB_IF_ROW2 &row = ifTable->Table[i];
+
+				// Skip loopback and tunnel interfaces
+				if (row.Type == IF_TYPE_SOFTWARE_LOOPBACK)
+					continue;
+				if (row.Type == IF_TYPE_TUNNEL)
+					continue;
+				// Only count interfaces that are up and connected
+				if (row.OperStatus != IfOperStatusUp)
+					continue;
+
+				// Acculumate bytes across al active non-loopback interfaces
+				totalBytesIn += row.InOctets;
+				totalBytesOut += row.OutOctets;
+			}
+
+			// Free the interface table to avoid memory leaks
+			FreeMibTable(ifTable);
+
+			// Calculate elapsed time since last measurment
+			auto currentTime = std::chrono::steady_clock::now();
+			float deltaSeconds = std::chrono::duration<float>(currentTime - prevTime).count();
+
+			// Initialize baseline values on first run
+			if (!initialized)
+			{
+				prevBytesIn = totalBytesIn;
+				prevBytesOut = totalBytesOut;
+				prevTime = currentTime;
+				initialized = true;
+				net.downloadKBps = 0.0f;
+				net.uploadKBps = 0.0f;
+			}
+			else
+			{
+				// Calculate byte deltas since the last measurement
+				uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
+				uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
+
+				// Convert bytes to KB/s using elapsed time
+				if (deltaSeconds > 0.0f)
+				{
+					net.downloadKBps = (bytesInDiff / 1024.0f) / deltaSeconds;
+					net.uploadKBps = (bytesOutDiff / 1024.0f) / deltaSeconds;
+				}
+				else
+				{
+					net.downloadKBps = 0.0f;
+					net.uploadKBps = 0.0f;
+				}
+
+				// Store current values for next iteration
+				prevBytesIn = totalBytesIn;
+				prevBytesOut = totalBytesOut;
+				prevTime = currentTime;
+			}
+
+			// Update totals and history
+			net.totalDownloadMB += net.downloadKBps / 1024.0f;
+			net.totalUploadMB += net.uploadKBps / 1024.0f;
+
+			// Add current speeds to history buffers
+			net.downloadHistory.push_back(net.downloadKBps);
+			net.uploadHistory.push_back(net.uploadKBps);
+
+			// Maintain rolling window by removing oldest samle if buffer is full
+			if (net.downloadHistory.size() > MAX_SAMPLE)
+			{
+				net.downloadHistory.erase(net.downloadHistory.begin());
+				net.uploadHistory.erase(net.uploadHistory.begin());
+			}
+		}
 
 #elif defined(__APPLE__)
 		// MacOS implementation using systctl MIB interface
