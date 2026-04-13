@@ -2,6 +2,8 @@
 #include <cmath>
 #include <cstdint>
 #include <chrono>
+// Error messages and debug messages
+#include <iostream>
 
 // Platform-specific libraries for CPU monitoring
 #if defined(_WIN32)
@@ -151,8 +153,10 @@ namespace monitor
 
 		if (sysctl(mib, 5, &ifCount, &ifCountSize, nullptr, 0) == -1)
 		{
+			std::cerr << "[NET DEBUG] sysct1 IFMIB_IFCOUNT failed, errn=" << errno << std::endl;
 			return;
 		}
+		std::cerr << "[NET DEBUG] Interface count: " << ifCount << std::endl;
 
 		// Iterate over each interace and accumulate byte counts
 		for (int i = 1; i <= ifCount; ++i)
@@ -164,12 +168,20 @@ namespace monitor
 			int ifMib[] = {CTL_NET, PF_LINK, NETLINK_GENERIC, IFMIB_IFDATA, i, IFDATA_GENERAL};
 			if (sysctl(ifMib, 6, &ifmd, &ifmdSize, nullptr, 0) == -1)
 			{
+				 std::cerr << "[NET DEBUG] sysctl IFDATA failed for index " << i
+                 << ", errno=" << errno << std::endl;
 				continue;
 			}
+
+			std::cerr << "[NET DEBUG] iface[" << i << "] name=" << ifmd.ifmd_name
+            << " type=" << (int)ifmd.ifmd_data.ifi_type
+            << " ibytes=" << ifmd.ifmd_data.ifi_ibytes
+            << " obytes=" << ifmd.ifmd_data.ifi_obytes << std::endl;
 
 			// Skip lookback interface (lo0) - internal traffic only
 			if (ifmd.ifmd_data.ifi_type == IFT_LOOP)
 			{
+				std::cerr << "[NET DEBUG] Skipping loopback: " << ifmd.ifmd_name << std::endl;
 				continue;
 			}
 
@@ -177,6 +189,11 @@ namespace monitor
 			totalBytesIn += ifmd.ifmd_data.ifi_ibytes;
 			totalBytesOut += ifmd.ifmd_data.ifi_obytes;
 		}
+
+		std::cerr << "[NET DEBUG] totalBytesIn=" << totalBytesIn
+        << " totalBytesOut=" << totalBytesOut
+        << " deltaSeconds=" << deltaSeconds
+        << " initialized=" << initialized << std::endl;
 
 		// Initialize baseline values on first run
 		if (!initialized)
@@ -194,6 +211,9 @@ namespace monitor
 			uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
 			uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
 
+			std::cerr << "[NET DEBUG] bytesInDiff=" << bytesInDiff
+            << " bytesOutDiff=" << bytesOutDiff << std::endl;
+
 			// Convert bytes to KB/s using elapsed time
 			if (deltaSeconds > 0.0f) 
 			{
@@ -206,8 +226,14 @@ namespace monitor
 				net.uploadKBps = 0.0f;
 			}
 
-			prevTime = currentTime;
+			std::cerr << "[NET DEBUG] downloadKBps=" << net.downloadKBps
+        	<< " uploadKBps=" << net.uploadKBps << std::endl;
+
+	        prevBytesIn  = totalBytesIn;
+       		prevBytesOut = totalBytesOut;
+        	prevTime     = currentTime;
 		}
+
 
 		// Prevent negative values from counter wraps or resets
 		if (net.downloadKBps < 0.0f)
