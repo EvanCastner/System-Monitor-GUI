@@ -141,14 +141,6 @@ namespace monitor
 		// Only sample every 0.5 seconds
 		static auto lastSampleTime = std::chrono::steady_clock::now();
 		auto now = std::chrono::steady_clock::now();
-		float timeSinceLastSample = std::chrono::duration<float>(now - lastSampleTime).count();
-
-		if (timeSinceLastSample < 0.5f)
-		{
-			// Not enough time has passed - just return, keep last values
-			return;
-		}
-		lastSampleTime = now;
 
 		// Calculate elapsed time since last measurement
 		auto currentTime = std::chrono::steady_clock::now();
@@ -219,36 +211,39 @@ namespace monitor
 			net.downloadHistory.clear();
 			net.uploadHistory.clear();
 		}
-		else
+
+		float timeSinceLastSample = std::chrono::duration<float>(now - lastSampleTime).count();
+
+		if (timeSinceLastSample >= 0.5f)
 		{
-			// Calculate byte deltas since the last measurment
-			uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
+			float deltaSeconds = std::chrono::duration<float>(now - prevTime).count();
+
+			uint64_t bytesInDiff  = totalBytesIn - prevBytesIn;
 			uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
 
-			std::cerr << "[NET DEBUG] bytesInDiff=" << bytesInDiff
-            << " bytesOutDiff=" << bytesOutDiff << std::endl;
-
-			// Convert bytes to KB/s using elapsed time
-			if (deltaSeconds > 0.0f) 
+			if (deltaSeconds > 0.0f)
 			{
 				net.downloadKBps = (bytesInDiff / 1024.0f) / deltaSeconds;
-				net.uploadKBps = (bytesOutDiff / 1024.0f) / deltaSeconds;
+				net.uploadKBps   = (bytesOutDiff / 1024.0f) / deltaSeconds;
 			}
-			else 
+
+			// store history ONLY here
+			net.downloadHistory.push_back(net.downloadKBps);
+			net.uploadHistory.push_back(net.uploadKBps);
+
+			if (net.downloadHistory.size() > MAX_SAMPLE)
 			{
-				net.downloadKBps = 0.0f;
-				net.uploadKBps = 0.0f;
+				net.downloadHistory.erase(net.downloadHistory.begin());
+				net.uploadHistory.erase(net.uploadHistory.begin());
 			}
 
-			std::cerr << "[NET DEBUG] downloadKBps=" << net.downloadKBps
-        	<< " uploadKBps=" << net.uploadKBps << std::endl;
-
-	        prevBytesIn  = totalBytesIn;
-       		prevBytesOut = totalBytesOut;
-        	prevTime     = currentTime;
+			prevBytesIn  = totalBytesIn;
+			prevBytesOut = totalBytesOut;
+			prevTime     = now;
+			lastSampleTime = now;
 		}
 
-		const float alpha = 0.2f;
+		const float alpha = 0.1f;
 		// Initialize on first valid sample
 		if (net.smoothDownloadKBps == 0.0f)
 		{
