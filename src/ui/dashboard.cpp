@@ -85,7 +85,7 @@ namespace ui
 			// Configure axis: no X-axis labels, Y-axis auto-fits to data range
 			ImPlot::SetupAxes(nullptr, "KB/s", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
 			// Y-axis always ranges
-			ImPlot::SetupAxisLimitsConstraints(ImAxis_Y1, 0.0, IMPLOT_AUTO);
+			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 10, ImGuiCond_Always);
 			// Get number of historical samples
 			int count = net.downloadHistory.size();
 			if (count > 0)
