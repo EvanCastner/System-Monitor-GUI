@@ -84,13 +84,13 @@ namespace ui
 		{
 			// Configure axis: no X-axis labels, Y-axis auto-fits to data range
 			ImPlot::SetupAxes(nullptr, "KB/s", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
-			// Y-axis always ranges from 0-100%
+			// Y-axis always ranges
 			ImPlot::SetupAxisLimitsConstraints(ImAxis_Y1, 0.0, IMPLOT_AUTO);
 			// Get number of historical samples
 			int count = net.downloadHistory.size();
 			if (count > 0)
 			{
-				ImPlot::SetupAxesLimits(ImAxis_X1, 0, count - 1, ImGuiCond_Always);
+				ImPlot::SetupAxisLimits(ImAxis_X1, 0, count - 1, ImGuiCond_Always);
 			}
 			// Plot download speed history (shown in one color)
 			ImPlot::PlotLine("Download", net.downloadHistory.data(), net.downloadHistory.size());
