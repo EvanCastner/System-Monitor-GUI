@@ -138,6 +138,18 @@ namespace monitor
 		static bool initialized = false;
 		static auto prevTime = std::chrono::steady_clock::now();
 
+		// Only sample every 0.5 seconds
+		static auto lastSampleTime = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
+		float timeSinceLastSample = std::chrono::duration<float>(now - lastSampleTime).count();
+
+		if (timeSinceLastSample < 0.5f)
+		{
+			// Not enough time has passed - just return, keep last values
+			return;
+		}
+		lastSampleTime = now;
+
 		// Calculate elapsed time since last measurement
 		auto currentTime = std::chrono::steady_clock::now();
 		float deltaSeconds = std::chrono::duration<float>(currentTime - prevTime).count();
@@ -204,6 +216,8 @@ namespace monitor
 			initialized = true;
 			net.downloadKBps = 0.0f;
 			net.uploadKBps = 0.0f;
+			net.downloadHistory.clear();
+			net.uploadHistory.clear();
 		}
 		else
 		{
@@ -217,8 +231,8 @@ namespace monitor
 			// Convert bytes to KB/s using elapsed time
 			if (deltaSeconds > 0.0f) 
 			{
-				net.downloadKBps = (float)bytesInDiff / 1024.0f;
-				net.uploadKBps = (float)bytesOutDiff / 1024.0f;
+				net.downloadKBps = (bytesInDiff / 1024.0f) / deltaSeconds;
+				net.uploadKBps = (bytesOutDiff / 1024.0f) / deltaSeconds;
 			}
 			else 
 			{
@@ -234,16 +248,11 @@ namespace monitor
         	prevTime     = currentTime;
 		}
 
-
 		// Prevent negative values from counter wraps or resets
 		if (net.downloadKBps < 0.0f)
 			net.downloadKBps = 0.0f;
 		if (net.uploadKBps < 0.0f)
 			net.uploadKBps = 0.0f;
-
-		// Store current byte counts for next iteration
-		prevBytesIn = totalBytesIn;
-		prevBytesOut = totalBytesOut;
 
 #elif defined(__linux__)
 		// Linux implementation using /proc/net/dev
