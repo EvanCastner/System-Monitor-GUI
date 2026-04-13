@@ -248,11 +248,18 @@ namespace monitor
         	prevTime     = currentTime;
 		}
 
-		// Prevent negative values from counter wraps or resets
-		if (net.downloadKBps < 0.0f)
-			net.downloadKBps = 0.0f;
-		if (net.uploadKBps < 0.0f)
-			net.uploadKBps = 0.0f;
+		const float alpha = 0.2f;
+		// Initialize on first valid sample
+		if (net.smoothDownloadKBps == 0.0f)
+		{
+			net.smoothDownloadKBps = net.downloadKBps;
+			net.smoothUploadKBps = net.uploadKBps;
+		}
+		else 
+		{
+			net.smoothDownloadKBps = alpha * net.downloadKBps + (1.0f - alpha) * net.smoothDownloadKBps;
+			net.smoothUploadKBps = alpha * net.uploadKBps + (1.0f - alpha) * net.smoothUploadKBps;
+		}
 
 #elif defined(__linux__)
 		// Linux implementation using /proc/net/dev
@@ -361,8 +368,8 @@ namespace monitor
 		net.totalUploadMB += net.uploadKBps / 1024.0f;
 
 		// Add current speeds to history buffers
-		net.downloadHistory.push_back(net.downloadKBps);
-		net.uploadHistory.push_back(net.uploadKBps);
+		net.downloadHistory.push_back(net.smoothDownloadKBps);
+		net.uploadHistory.push_back(net.smoothUploadKBps);
 
 		// Maintain rolling window by removing oldest sample if buffer is full
 		if (net.downloadHistory.size() > MAX_SAMPLE)
