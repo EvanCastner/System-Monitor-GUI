@@ -32,7 +32,7 @@ int main()
 #endif
 
 	// Creates application window (800x600 pixels)
-	GLFWwindow *window = glfwCreateWindow(800, 600, "System Moniter (Test)", nullptr, nullptr);
+	GLFWwindow *window = glfwCreateWindow(1000, 800, "System Moniter (Test)", nullptr, nullptr);
 	if (!window)
 	{
 		glfwTerminate();
