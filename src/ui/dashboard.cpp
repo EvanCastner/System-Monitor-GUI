@@ -47,8 +47,8 @@ namespace ui
 		ImGui::NextColumn();
 
 		ImGui::Text("Network");
-		ImGui::Text("%.1f UPLOAD", net.smoothUploadKBps);
-		ImGui::Text("%.1f DOWNLOAD", net.smoothDownloadKBps);
+		ImGui::Text("%.2f UPLOAD", net.smoothUploadKBps);
+		ImGui::Text("%.2f DOWNLOAD", net.smoothDownloadKBps);
 		ImGui::Text("Total Downloaded: %.1f MB", net.totalDownloadMB);
 		ImGui::Text("Total Uploaded:   %.1f MB", net.totalUploadMB);
 
@@ -129,7 +129,8 @@ namespace ui
 				// Configure axis: no X-axis labels, Y-axis auto-fits to data range
 				ImPlot::SetupAxes(nullptr, "KB/s", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_AutoFit);
 				// Y-axis always ranges
-				ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0, ImGuiCond_Once);
+				ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 100, ImGuiCond_Always);
+		
 				// Get number of historical samples
 				int count = (int)net.downloadHistory.size();
 				if (count > 0)

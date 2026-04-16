@@ -142,10 +142,6 @@ namespace monitor
 		static auto lastSampleTime = std::chrono::steady_clock::now();
 		auto now = std::chrono::steady_clock::now();
 
-		// Calculate elapsed time since last measurement
-		auto currentTime = std::chrono::steady_clock::now();
-		float deltaSeconds = std::chrono::duration<float>(currentTime - prevTime).count();
-
 		// Accumulators for summing across all interfaces
 		uint64_t totalBytesIn = 0;
 		uint64_t totalBytesOut = 0;
@@ -154,6 +150,10 @@ namespace monitor
 		int mib[] = {CTL_NET, PF_LINK, NETLINK_GENERIC, IFMIB_SYSTEM, IFMIB_IFCOUNT};
 		int ifCount = 0;
 		size_t ifCountSize = sizeof(ifCount);
+		if (sysctl(mib, 5, &ifCount, &ifCountSize, nullptr, 0) == -1)
+		{
+			return;
+		}
 
 		// Iterate over each interace and accumulate byte counts
 		for (int i = 1; i <= ifCount; ++i)
@@ -168,6 +168,11 @@ namespace monitor
 				continue;
 			}
 
+			if (ifmd.ifmd_name[0] == 'l' && ifmd.ifmd_name[1] == 'o')
+			{
+				continue;
+			}
+
 			// Accumulate bytes across all non-loopback interfaces
 			totalBytesIn += ifmd.ifmd_data.ifi_ibytes;
 			totalBytesOut += ifmd.ifmd_data.ifi_obytes;
@@ -178,7 +183,7 @@ namespace monitor
 		{
 			prevBytesIn = totalBytesIn;
 			prevBytesOut = totalBytesOut;
-			prevTime = currentTime;
+			prevTime = now;
 			initialized = true;
 			net.downloadKBps = 0.0f;
 			net.uploadKBps = 0.0f;
@@ -201,23 +206,13 @@ namespace monitor
 				net.uploadKBps = (bytesOutDiff / 1024.0f) / deltaSeconds;
 			}
 
-			// store history ONLY here
-			net.downloadHistory.push_back(net.downloadKBps);
-			net.uploadHistory.push_back(net.uploadKBps);
-
-			if (net.downloadHistory.size() > MAX_SAMPLE)
-			{
-				net.downloadHistory.erase(net.downloadHistory.begin());
-				net.uploadHistory.erase(net.uploadHistory.begin());
-			}
-
 			prevBytesIn = totalBytesIn;
 			prevBytesOut = totalBytesOut;
 			prevTime = now;
 			lastSampleTime = now;
 		}
 
-		const float alpha = 0.1f;
+		const float alpha = 0.3f;
 		// Initialize on first valid sample
 		if (net.smoothDownloadKBps == 0.0f)
 		{
