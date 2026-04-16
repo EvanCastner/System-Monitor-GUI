@@ -69,7 +69,7 @@ namespace ui
 		ImGui::Spacing();
 
 		// Create CPU usage line graph
-		if (ImPlot::BeginPlot("CPU Usage %", ImVec2(-1, 200)))
+		if (ImPlot::BeginPlot("CPU Usage %", ImVec2(-1, 240)))
 		{
 			// Configure axes: no X-axis labels, Y-axis shows percentage
 			ImPlot::SetupAxes(nullptr, "Usage %", ImPlotAxisFlags_NoTickLabels, ImPlotAxisFlags_None);
@@ -94,7 +94,7 @@ namespace ui
 		ImGui::Separator();
 
 		// ==== MEMORY USAGE CARD ====
-		ImGui::BeginChild("MemoryCard", ImVec2(0, 120), true);
+		ImGui::BeginChild("MemoryCard", ImVec2(0, 100), true);
 
 		ImGui::Text("Memory");
 		ImGui::Separator();
@@ -116,7 +116,7 @@ namespace ui
 		ImGui::Separator();
 
 		// ==== NETWORK USAGE CARD ====
-		ImGui::BeginChild("NetworkCard", ImVec2(0, 260), true);
+		ImGui::BeginChild("NetworkCard", ImVec2(0, 240), true);
 
 		ImGui::Text("Network");
 		ImGui::Separator();
