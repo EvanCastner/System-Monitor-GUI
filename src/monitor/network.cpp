@@ -2,6 +2,8 @@
 #include <cmath>
 #include <cstdint>
 #include <chrono>
+// Error messages and debug messages
+#include <iostream>
 
 // Platform-specific libraries for CPU monitoring
 #if defined(_WIN32)
@@ -136,6 +138,10 @@ namespace monitor
 		static bool initialized = false;
 		static auto prevTime = std::chrono::steady_clock::now();
 
+		// Only sample every 0.5 seconds
+		static auto lastSampleTime = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
+
 		// Calculate elapsed time since last measurement
 		auto currentTime = std::chrono::steady_clock::now();
 		float deltaSeconds = std::chrono::duration<float>(currentTime - prevTime).count();
@@ -151,8 +157,10 @@ namespace monitor
 
 		if (sysctl(mib, 5, &ifCount, &ifCountSize, nullptr, 0) == -1)
 		{
+			std::cerr << "[NET DEBUG] sysct1 IFMIB_IFCOUNT failed, errn=" << errno << std::endl;
 			return;
 		}
+		std::cerr << "[NET DEBUG] Interface count: " << ifCount << std::endl;
 
 		// Iterate over each interace and accumulate byte counts
 		for (int i = 1; i <= ifCount; ++i)
@@ -164,12 +172,20 @@ namespace monitor
 			int ifMib[] = {CTL_NET, PF_LINK, NETLINK_GENERIC, IFMIB_IFDATA, i, IFDATA_GENERAL};
 			if (sysctl(ifMib, 6, &ifmd, &ifmdSize, nullptr, 0) == -1)
 			{
+				 std::cerr << "[NET DEBUG] sysctl IFDATA failed for index " << i
+                 << ", errno=" << errno << std::endl;
 				continue;
 			}
+
+			std::cerr << "[NET DEBUG] iface[" << i << "] name=" << ifmd.ifmd_name
+            << " type=" << (int)ifmd.ifmd_data.ifi_type
+            << " ibytes=" << ifmd.ifmd_data.ifi_ibytes
+            << " obytes=" << ifmd.ifmd_data.ifi_obytes << std::endl;
 
 			// Skip lookback interface (lo0) - internal traffic only
 			if (ifmd.ifmd_data.ifi_type == IFT_LOOP)
 			{
+				std::cerr << "[NET DEBUG] Skipping loopback: " << ifmd.ifmd_name << std::endl;
 				continue;
 			}
 
@@ -177,6 +193,11 @@ namespace monitor
 			totalBytesIn += ifmd.ifmd_data.ifi_ibytes;
 			totalBytesOut += ifmd.ifmd_data.ifi_obytes;
 		}
+
+		std::cerr << "[NET DEBUG] totalBytesIn=" << totalBytesIn
+        << " totalBytesOut=" << totalBytesOut
+        << " deltaSeconds=" << deltaSeconds
+        << " initialized=" << initialized << std::endl;
 
 		// Initialize baseline values on first run
 		if (!initialized)
@@ -187,37 +208,53 @@ namespace monitor
 			initialized = true;
 			net.downloadKBps = 0.0f;
 			net.uploadKBps = 0.0f;
+			net.downloadHistory.clear();
+			net.uploadHistory.clear();
 		}
-		else
+
+		float timeSinceLastSample = std::chrono::duration<float>(now - lastSampleTime).count();
+
+		if (timeSinceLastSample >= 0.5f)
 		{
-			// Calculate byte deltas since the last measurment
-			uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
+			float deltaSeconds = std::chrono::duration<float>(now - prevTime).count();
+
+			uint64_t bytesInDiff  = totalBytesIn - prevBytesIn;
 			uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
 
-			// Convert bytes to KB/s using elapsed time
-			if (deltaSeconds > 0.0f) 
+			if (deltaSeconds > 0.0f)
 			{
-				net.downloadKBps = (float)bytesInDiff / 1024.0f;
-				net.uploadKBps = (float)bytesOutDiff / 1024.0f;
-			}
-			else 
-			{
-				net.downloadKBps = 0.0f;
-				net.uploadKBps = 0.0f;
+				net.downloadKBps = (bytesInDiff / 1024.0f) / deltaSeconds;
+				net.uploadKBps   = (bytesOutDiff / 1024.0f) / deltaSeconds;
 			}
 
-			prevTime = currentTime;
+			// store history ONLY here
+			net.downloadHistory.push_back(net.downloadKBps);
+			net.uploadHistory.push_back(net.uploadKBps);
+
+			if (net.downloadHistory.size() > MAX_SAMPLE)
+			{
+				net.downloadHistory.erase(net.downloadHistory.begin());
+				net.uploadHistory.erase(net.uploadHistory.begin());
+			}
+
+			prevBytesIn  = totalBytesIn;
+			prevBytesOut = totalBytesOut;
+			prevTime     = now;
+			lastSampleTime = now;
 		}
 
-		// Prevent negative values from counter wraps or resets
-		if (net.downloadKBps < 0.0f)
-			net.downloadKBps = 0.0f;
-		if (net.uploadKBps < 0.0f)
-			net.uploadKBps = 0.0f;
-
-		// Store current byte counts for next iteration
-		prevBytesIn = totalBytesIn;
-		prevBytesOut = totalBytesOut;
+		const float alpha = 0.1f;
+		// Initialize on first valid sample
+		if (net.smoothDownloadKBps == 0.0f)
+		{
+			net.smoothDownloadKBps = net.downloadKBps;
+			net.smoothUploadKBps = net.uploadKBps;
+		}
+		else 
+		{
+			net.smoothDownloadKBps = alpha * net.downloadKBps + (1.0f - alpha) * net.smoothDownloadKBps;
+			net.smoothUploadKBps = alpha * net.uploadKBps + (1.0f - alpha) * net.smoothUploadKBps;
+		}
 
 #elif defined(__linux__)
 		// Linux implementation using /proc/net/dev
@@ -326,8 +363,8 @@ namespace monitor
 		net.totalUploadMB += net.uploadKBps / 1024.0f;
 
 		// Add current speeds to history buffers
-		net.downloadHistory.push_back(net.downloadKBps);
-		net.uploadHistory.push_back(net.uploadKBps);
+		net.downloadHistory.push_back(net.smoothDownloadKBps);
+		net.uploadHistory.push_back(net.smoothUploadKBps);
 
 		// Maintain rolling window by removing oldest sample if buffer is full
 		if (net.downloadHistory.size() > MAX_SAMPLE)

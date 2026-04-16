@@ -14,6 +14,9 @@ namespace monitor {
 		float totalDownloadMB;
 		// Cumulative upload total in megabytes
 		float totalUploadMB;
+		// For smooth graph showings
+		float smoothDownloadKBps = 0.0f;
+		float smoothUploadKBps = 0.0f;
 
 		// Rolling history of download speeds
 		std::vector<float> downloadHistory;
