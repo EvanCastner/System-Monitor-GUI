@@ -20,9 +20,6 @@ namespace ui
 	 */
 	void render_dashboard()
 	{
-		// State flag for exanding the graphs
-		static bool showGraphs = false;
-
 		// Static data structures persist between frames to maintain history
 		static monitor::CpuData cpu;
 		static monitor::MemoryData mem;
@@ -58,19 +55,9 @@ namespace ui
 		ImGui::Columns(1);
 		ImGui::Spacing();
 
-		// Toggle for expanding the graphs
-		if (ImGui::Button(showGraphs ? "Hide Details" : "Show Details"))
+		if (ImGui::TreeNode("CPU"))
 		{
-			showGraphs = !showGraphs;
-		}
-
-		// Graphs when details button is clicked
-		if (showGraphs)
-		{
-			// ==== CPU USAGE CARD ====
-			ImGui::BeginChild("CPUCard", ImVec2(0, 250), true);
-
-			ImGui::Text("CPU");
+			// ==== CPU USAGE NODE ====
 			ImGui::Separator();
 
 			// Big number
@@ -101,17 +88,15 @@ namespace ui
 				ImPlot::EndPlot();
 			}
 
-			ImGui::EndChild();
+			ImGui::TreePop();
+		}
 
+		if (ImGui::TreeNode("Memory"))
+		{
+			// ==== MEMORY USAGE NODE ====
 			ImGui::Separator();
 
-			// ==== MEMORY USAGE CARD ====
-			ImGui::BeginChild("MemoryCard", ImVec2(0, 100), true);
-
-			ImGui::Text("Memory");
-			ImGui::Separator();
-
-			// Big Numb
+			// Big Number
 			ImGui::SetWindowFontScale(1.3f);
 			ImGui::Text("%.0f%%", mem.usagePercent);
 			ImGui::SetWindowFontScale(1.0f);
@@ -123,14 +108,12 @@ namespace ui
 			// Display memory usage in text form: used / total
 			ImGui::Text("RAM %lu MB / %lu MB", mem.usedMB, mem.totalMB);
 
-			ImGui::EndChild();
+			ImGui::TreePop();
+		}
 
-			ImGui::Separator();
-
+		if (ImGui::TreeNode("Network"))
+		{
 			// ==== NETWORK USAGE CARD ====
-			ImGui::BeginChild("NetworkCard", ImVec2(0, 240), true);
-
-			ImGui::Text("Network");
 			ImGui::Separator();
 
 			// Big numbers
@@ -160,7 +143,7 @@ namespace ui
 				ImPlot::EndPlot();
 			}
 
-			ImGui::EndChild();
+			ImGui::TreePop();
 		}
 
 		// Close the dashboard window
