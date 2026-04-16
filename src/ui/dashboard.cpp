@@ -33,6 +33,25 @@ namespace ui
 		// Create main dashboard window
 		ImGui::Begin("System Monitor Dashboard");
 
+		// Overview section
+		ImGui::SeparatorText("Overview");
+
+		ImGui::Columns(3, nullptr, false);
+
+		ImGui::Text("CPU");
+		ImGui::Text("%.1f%%", cpu.usage);
+		ImGui::NextColumn();
+
+		ImGui::Text("Memory");
+		ImGui::Text("%.1f%%", mem.usagePercent);
+		ImGui::NextColumn();
+
+		ImGui::Text("Network");
+		ImGui::Text("%.1f ↓ %.1f ↑", net.smoothDownloadKBps, net.smoothUploadKBps);
+
+		ImGui::Columns(1);
+		ImGui::Spacing();
+
 		// ==== CPU USAGE SECTION ====
 		ImGui::Text("CPU Usage Data");
 		ImGui::Separator();
