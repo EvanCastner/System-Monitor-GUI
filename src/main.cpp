@@ -31,7 +31,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-	// Creates application window (800x600 pixels)
+	// Creates application window
 	GLFWwindow *window = glfwCreateWindow(1000, 800, "System Moniter (Test)", nullptr, nullptr);
 	if (!window)
 	{
