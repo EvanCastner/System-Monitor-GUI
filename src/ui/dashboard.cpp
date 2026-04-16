@@ -107,7 +107,7 @@ namespace ui
 		ImGui::Spacing();
 
 		// Visual progress bar showing memory usage
-		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 12));
+		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 12), "");
 		// Display memory usage in text form: used / total
 		ImGui::Text("RAM %lu MB / %lu MB", mem.usedMB, mem.totalMB);
 
