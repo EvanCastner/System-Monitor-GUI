@@ -155,13 +155,6 @@ namespace monitor
 		int ifCount = 0;
 		size_t ifCountSize = sizeof(ifCount);
 
-		if (sysctl(mib, 5, &ifCount, &ifCountSize, nullptr, 0) == -1)
-		{
-			std::cerr << "[NET DEBUG] sysct1 IFMIB_IFCOUNT failed, errn=" << errno << std::endl;
-			return;
-		}
-		std::cerr << "[NET DEBUG] Interface count: " << ifCount << std::endl;
-
 		// Iterate over each interace and accumulate byte counts
 		for (int i = 1; i <= ifCount; ++i)
 		{
@@ -172,20 +165,6 @@ namespace monitor
 			int ifMib[] = {CTL_NET, PF_LINK, NETLINK_GENERIC, IFMIB_IFDATA, i, IFDATA_GENERAL};
 			if (sysctl(ifMib, 6, &ifmd, &ifmdSize, nullptr, 0) == -1)
 			{
-				 std::cerr << "[NET DEBUG] sysctl IFDATA failed for index " << i
-                 << ", errno=" << errno << std::endl;
-				continue;
-			}
-
-			std::cerr << "[NET DEBUG] iface[" << i << "] name=" << ifmd.ifmd_name
-            << " type=" << (int)ifmd.ifmd_data.ifi_type
-            << " ibytes=" << ifmd.ifmd_data.ifi_ibytes
-            << " obytes=" << ifmd.ifmd_data.ifi_obytes << std::endl;
-
-			// Skip lookback interface (lo0) - internal traffic only
-			if (ifmd.ifmd_data.ifi_type == IFT_LOOP)
-			{
-				std::cerr << "[NET DEBUG] Skipping loopback: " << ifmd.ifmd_name << std::endl;
 				continue;
 			}
 
@@ -193,11 +172,6 @@ namespace monitor
 			totalBytesIn += ifmd.ifmd_data.ifi_ibytes;
 			totalBytesOut += ifmd.ifmd_data.ifi_obytes;
 		}
-
-		std::cerr << "[NET DEBUG] totalBytesIn=" << totalBytesIn
-        << " totalBytesOut=" << totalBytesOut
-        << " deltaSeconds=" << deltaSeconds
-        << " initialized=" << initialized << std::endl;
 
 		// Initialize baseline values on first run
 		if (!initialized)
@@ -218,13 +192,13 @@ namespace monitor
 		{
 			float deltaSeconds = std::chrono::duration<float>(now - prevTime).count();
 
-			uint64_t bytesInDiff  = totalBytesIn - prevBytesIn;
+			uint64_t bytesInDiff = totalBytesIn - prevBytesIn;
 			uint64_t bytesOutDiff = totalBytesOut - prevBytesOut;
 
 			if (deltaSeconds > 0.0f)
 			{
 				net.downloadKBps = (bytesInDiff / 1024.0f) / deltaSeconds;
-				net.uploadKBps   = (bytesOutDiff / 1024.0f) / deltaSeconds;
+				net.uploadKBps = (bytesOutDiff / 1024.0f) / deltaSeconds;
 			}
 
 			// store history ONLY here
@@ -237,9 +211,9 @@ namespace monitor
 				net.uploadHistory.erase(net.uploadHistory.begin());
 			}
 
-			prevBytesIn  = totalBytesIn;
+			prevBytesIn = totalBytesIn;
 			prevBytesOut = totalBytesOut;
-			prevTime     = now;
+			prevTime = now;
 			lastSampleTime = now;
 		}
 
@@ -250,7 +224,7 @@ namespace monitor
 			net.smoothDownloadKBps = net.downloadKBps;
 			net.smoothUploadKBps = net.uploadKBps;
 		}
-		else 
+		else
 		{
 			net.smoothDownloadKBps = alpha * net.downloadKBps + (1.0f - alpha) * net.smoothDownloadKBps;
 			net.smoothUploadKBps = alpha * net.uploadKBps + (1.0f - alpha) * net.smoothUploadKBps;
