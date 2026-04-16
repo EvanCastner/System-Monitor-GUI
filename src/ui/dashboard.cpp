@@ -47,7 +47,10 @@ namespace ui
 		ImGui::NextColumn();
 
 		ImGui::Text("Network");
-		ImGui::Text("%.1f ↓ %.1f ↑", net.smoothDownloadKBps, net.smoothUploadKBps);
+		ImGui::Text("%.1f UPLOAD", net.smoothUploadKBps);
+		ImGui::Text("%.1f DOWNLOAD", net.smoothDownloadKBps);
+		ImGui::Text("Total Downloaded: %.1f MB", net.totalDownloadMB);
+		ImGui::Text("Total Uploaded:   %.1f MB", net.totalUploadMB);
 
 		ImGui::Columns(1);
 		ImGui::Spacing();
@@ -55,13 +58,15 @@ namespace ui
 		// ==== CPU USAGE CARD ====
 		ImGui::BeginChild("CPUCard", ImVec2(0, 250), true);
 
-		ImGui::Text("CPU Usage Data");
+		ImGui::Text("CPU");
 		ImGui::Separator();
 
 		// Big number
 		ImGui::SetWindowFontScale(1.3f);
 		ImGui::Text("%.1f%%", cpu.usage);
 		ImGui::SetWindowFontScale(1.0f);
+
+		ImGui::Spacing();
 
 		// Create CPU usage line graph
 		if (ImPlot::BeginPlot("CPU Usage %", ImVec2(-1, 200)))
@@ -91,25 +96,37 @@ namespace ui
 		// ==== MEMORY USAGE CARD ====
 		ImGui::BeginChild("MemoryCard", ImVec2(0, 120), true);
 
-		ImGui::Text("Memory Usage Data");
+		ImGui::Text("Memory");
 		ImGui::Separator();
 
-		// Display memory usage in text form: used / total
-		ImGui::Text("RAM %lu MB / %lu MB (%.0f%%)",
-					mem.usedMB,
-					mem.totalMB,
-					mem.usagePercent);
+		// Big Numb
+		ImGui::SetWindowFontScale(1.3f);
+		ImGui::Text("%.0f%%", mem.usagePercent);
+		ImGui::SetWindowFontScale(1.0f);
+
+		ImGui::Spacing();
 
 		// Visual progress bar showing memory usage
-		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 0));
-
-		ImGui::Text("%.0f%%", mem.usagePercent);
+		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 12));
+		// Display memory usage in text form: used / total
+		ImGui::Text("RAM %lu MB / %lu MB", mem.usedMB, mem.totalMB);
 
 		ImGui::EndChild();
 
-		// ==== NETWORK USAGE SECTION ====
-		ImGui::Text("Network Usage Data");
 		ImGui::Separator();
+
+		// ==== NETWORK USAGE CARD ====
+		ImGui::BeginChild("NetworkCard", ImVec2(0, 260), true);
+
+		ImGui::Text("Network");
+		ImGui::Separator();
+
+		// Big numbers
+		ImGui::SetWindowFontScale(1.3f);
+		ImGui::Text("%.1f KB/s", net.smoothDownloadKBps);
+		ImGui::SetWindowFontScale(1.0f);
+
+		ImGui::Spacing();
 
 		// Create network speed graph showing download and upload rates
 		if (ImPlot::BeginPlot("Network Speed (KB/s)", ImVec2(-1, 200)))
@@ -131,15 +148,9 @@ namespace ui
 			ImPlot::EndPlot();
 		}
 
-		// Display current network speeds
-		ImGui::Text("Download: %.1f KB/s", net.downloadKBps);
-		ImGui::Text("Upload:   %.1f KB/s", net.uploadKBps);
+		ImGui::EndChild();
 
 		ImGui::Spacing();
-
-		// Display cumulative network totals since start
-		ImGui::Text("Total Downloaded: %.1f MB", net.totalDownloadMB);
-		ImGui::Text("Total Uploaded:   %.1f MB", net.totalUploadMB);
 
 		// Close the dashboard window
 		ImGui::End();
