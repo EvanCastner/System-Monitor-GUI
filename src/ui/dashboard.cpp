@@ -52,9 +52,16 @@ namespace ui
 		ImGui::Columns(1);
 		ImGui::Spacing();
 
-		// ==== CPU USAGE SECTION ====
+		// ==== CPU USAGE CARD ====
+		ImGui::BeginChild("CPUCard", ImVec2(0, 250), true);
+
 		ImGui::Text("CPU Usage Data");
 		ImGui::Separator();
+
+		// Big number
+		ImGui::SetWindowFontScale(1.3f);
+		ImGui::Text("%.1f%%", cpu.usage);
+		ImGui::SetWindowFontScale(1.0f);
 
 		// Create CPU usage line graph
 		if (ImPlot::BeginPlot("CPU Usage %", ImVec2(-1, 200)))
@@ -70,18 +77,20 @@ namespace ui
 			{
 				// X-axis spans from 0 to the number of samples
 				ImPlot::SetupAxisLimits(ImAxis_X1, 0, count - 1, ImGuiCond_Always);
+				// Plot the CPU usage history as a line graph
+				ImPlot::PlotLine("CPU %", cpu.history.data(), count);
 			}
-
-			// Plot the CPU usage history as a line graph
-			ImPlot::PlotLine("CPU %", cpu.history.data(), count);
-
-			// Bug Test
-			ImGui::Text("CPU: %.2f%%", cpu.usage);
 
 			ImPlot::EndPlot();
 		}
 
-		// ==== MEMORY USAGE SECTION ====
+		ImGui::EndChild();
+
+		ImGui::Separator();
+
+		// ==== MEMORY USAGE CARD ====
+		ImGui::BeginChild("MemoryCard", ImVec2(0, 120), true);
+
 		ImGui::Text("Memory Usage Data");
 		ImGui::Separator();
 
@@ -93,6 +102,10 @@ namespace ui
 
 		// Visual progress bar showing memory usage
 		ImGui::ProgressBar(mem.usagePercent / 100.0f, ImVec2(-1, 0));
+
+		ImGui::Text("%.0f%%", mem.usagePercent);
+
+		ImGui::EndChild();
 
 		// ==== NETWORK USAGE SECTION ====
 		ImGui::Text("Network Usage Data");
