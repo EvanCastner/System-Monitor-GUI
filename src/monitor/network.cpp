@@ -233,6 +233,15 @@ namespace monitor
 #elif defined(__linux__)
 		// Linux implementation using /proc/net/dev
 
+		// Limit update rate
+		static auto lastUpdate = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count() < 100)
+		{
+			return;
+		}
+		lastUpdate = now;
+
 		// Open file
 		std::ifstream netFile("/proc/net/dev");
 		if (!netFile.is_open())
@@ -328,6 +337,20 @@ namespace monitor
 			// Update previous values for next iteration
 			prevBytesIn = totalBytesIn;
 			prevBytesOut = totalBytesOut;
+			prevTime = currentTime;
+
+			// Smooth the values for display
+			const float alpha = 0.3f;
+			if (net.smoothDownloadKBps == 0.0f)
+			{
+				net.smoothDownloadKBps = net.downloadKBps;
+				net.smoothUploadKBps = net.uploadKBps;
+			}
+			else
+			{
+				net.smoothDownloadKBps = alpha * net.downloadKBps + (1.0f - alpha) * net.smoothDownloadKBps;
+				net.smoothUploadKBps = alpha * net.uploadKBps + (1.0f - alpha) * net.smoothUploadKBps;
+			}
 		}
 
 #endif
