@@ -54,6 +54,15 @@ namespace monitor
 #if defined(_WIN32)
 		// Windows implementation using GetIfTable2 API
 
+		// Limit update frame
+		static auto lastUpdate = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count() < 100)
+		{
+			return;
+		}
+		lastUpdate = now;
+
 		// Static variables to track previous byte count and time
 		static uint64_t prevBytesIn = 0;
 		static uint64_t prevBytesOut = 0;
@@ -121,11 +130,23 @@ namespace monitor
 					net.downloadKBps = 0.0f;
 					net.uploadKBps = 0.0f;
 				}
+			}
 
-				// Store current values for next iteration
-				prevBytesIn = totalBytesIn;
-				prevBytesOut = totalBytesOut;
-				prevTime = currentTime;
+			// Store current values for next iteration
+			prevBytesIn = totalBytesIn;
+			prevBytesOut = totalBytesOut;
+			prevTime = currentTime;
+
+			const float alpha = 0.3f;
+			if (net.smoothDownloadKBps == 0.0f)
+			{
+				net.smoothDownloadKBps = net.downloadKBps;
+				net.smoothUploadKBps = net.uploadKBps;
+			}
+			else
+			{
+				net.smoothDownloadKBps = alpha * net.downloadKBps + (1.0f - alpha) * net.smoothDownloadKBps;
+				net.smoothUploadKBps = alpha * net.uploadKBps + (1.0f - alpha) * net.smoothUploadKBps;
 			}
 		}
 
