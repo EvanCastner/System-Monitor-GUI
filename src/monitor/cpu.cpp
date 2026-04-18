@@ -37,6 +37,15 @@ namespace monitor
 #if defined(_WIN32)
 		// Windows implementation using GetSystems API
 
+		// Limit the update rate
+		static auto lastUpdate = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count() < 150)
+		{
+			return;
+		}
+		lastUpdate = now;
+
 		// Static variables to store previous tick counts
 		static ULONGLONG prevIdle = 0, prevKernal = 0, prevUser = 0;
 
